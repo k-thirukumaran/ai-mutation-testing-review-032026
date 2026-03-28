@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Invisible Treadmill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;1,8..60,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── RESET & BASE ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0e0d0b;
+    --bg2:       #141310;
+    --bg3:       #1c1a16;
+    --bg4:       #242118;
+    --amber:     #d4a843;
+    --amber-dim: #9a7630;
+    --cream:     #e8dfc8;
+    --cream-dim: #a89e87;
+    --red-warn:  #c0392b;
+    --green-ok:  #27ae60;
+    --blue-note: #2980b9;
+    --border:    rgba(212,168,67,0.18);
+    --border2:   rgba(232,223,200,0.08);
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body:    'Source Serif 4', Georgia, serif;
+    --font-mono:    'JetBrains Mono', monospace;
+    --r:         6px;
+    --transition: 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  html { scroll-behavior: smooth; font-size: 16px; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    line-height: 1.8;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── PROGRESS MAP ── */
+  #progress-map {
+    position: fixed;
+    top: 50%;
+    right: 1.2rem;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    align-items: center;
+  }
+  .pm-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--bg4);
+    border: 1px solid var(--amber-dim);
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+  }
+  .pm-dot.active { background: var(--amber); border-color: var(--amber); transform: scale(1.4); }
+  .pm-dot:hover .pm-label { opacity: 1; transform: translateX(0); }
+  .pm-label {
+    position: absolute;
+    right: 1.4rem;
+    top: 50%;
+    transform: translateY(-50%) translateX(6px);
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--amber);
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    opacity: 0;
+    pointer-events: none;
+    transition: var(--transition);
+  }
+  .pm-line {
+    width: 1px; height: 24px;
+    background: linear-gradient(to bottom, var(--amber-dim), transparent);
+    opacity: 0.4;
+  }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 8vh 8vw 8vh max(3rem, calc(50vw - 38rem));
+    position: relative;
+    overflow: hidden;
+  }
+  #hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 80% 40%, rgba(212,168,67,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 40% at 10% 80%, rgba(212,168,67,0.03) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    color: var(--amber);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s forwards;
+  }
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.6rem, 6vw, 5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--cream);
+    max-width: 16ch;
+    margin-bottom: 1rem;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.35s forwards;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--amber);
+  }
+  .hero-sub {
+    font-size: 1.15rem;
+    color: var(--cream-dim);
+    max-width: 44ch;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.55s forwards;
+  }
+  .hero-premise {
+    background: var(--bg3);
+    border-left: 3px solid var(--amber);
+    padding: 1.2rem 1.5rem;
+    max-width: 46ch;
+    font-style: italic;
+    color: var(--cream);
+    font-size: 1.05rem;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.7s forwards;
+    border-radius: 0 var(--r) var(--r) 0;
+  }
+  .begin-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: var(--amber);
+    color: var(--bg);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: none;
+    padding: 0.9rem 1.8rem;
+    border-radius: var(--r);
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+    opacity: 0;
+    animation: fadeUp 0.9s 0.9s forwards;
+  }
+  .begin-btn:hover { background: var(--cream); transform: translateY(-2px); }
+  .begin-btn svg { transition: transform 0.3s; }
+  .begin-btn:hover svg { transform: translateY(3px); }
+
+  .scroll-chapters {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--amber-dim);
+    letter-spacing: 0.12em;
+    margin-top: 3rem;
+    opacity: 0;
+    animation: fadeUp 0.9s 1.1s forwards;
+  }
+  .chapter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+  }
+  .chapter-pill {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.25rem 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--cream-dim);
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+  }
+  .chapter-pill:hover { border-color: var(--amber); color: var(--amber); }
+
+  /* ── CHAPTER WRAPPER ── */
+  .chapter {
+    max-width: 76rem;
+    margin: 0 auto;
+    padding: 6rem max(1.5rem, 4vw);
+    position: relative;
+  }
+
+  .chapter-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1.2rem;
+    margin-bottom: 3rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .chapter-num {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--amber);
+    letter-spacing: 0.15em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .chapter-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--cream);
+  }
+  .chapter-title em { color: var(--amber); font-style: italic; }
+
+  /* ── LAYOUT GRID ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    margin: 2.5rem 0;
+  }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── PROSE ── */
+  .prose p { margin-bottom: 1.4rem; color: var(--cream); }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--amber); font-weight: 600; }
+  .prose em { color: var(--cream-dim); font-style: italic; }
+
+  /* ── SECTION HEADS ── */
+  .section-head {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--cream);
+    margin: 2.5rem 0 1rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--amber);
+  }
+
+  /* ── PULL QUOTE ── */
+  .pull-quote {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--amber);
+    padding: 1.8rem 2rem;
+    margin: 2.5rem 0;
+    border-radius: 0 0 var(--r) var(--r);
+    position: relative;
+  }
+  .pull-quote::before {
+    content: '\201C';
+    font-family: var(--font-display);
+    font-size: 5rem;
+    color: var(--amber);
+    opacity: 0.2;
+    position: absolute;
+    top: -0.5rem;
+    left: 1rem;
+    line-height: 1;
+  }
+  .pull-quote p {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-style: italic;
+    line-height: 1.6;
+    color: var(--cream);
+    margin: 0;
+  }
+
+  /* ── THOUGHT EXPERIMENT ── */
+  .thought-exp {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--r);
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+  .thought-exp-trigger {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.4rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: var(--cream);
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    transition: background var(--transition);
+  }
+  .thought-exp-trigger:hover { background: var(--bg4); }
+  .thought-exp-icon {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(212,168,67,0.15);
+    border: 1px solid var(--amber-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+  .thought-exp-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--amber);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.15rem;
+  }
+  .thought-exp-title { font-weight: 400; }
+  .thought-exp-chevron {
+    margin-left: auto;
+    color: var(--amber-dim);
+    transition: transform var(--transition);
+    flex-shrink: 0;
+  }
+  .thought-exp.open .thought-exp-chevron { transform: rotate(180deg); }
+  .thought-exp-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+  .thought-exp.open .thought-exp-body { max-height: 1200px; }
+  .thought-exp-inner {
+    padding: 0 1.4rem 1.4rem;
+    border-top: 1px solid var(--border2);
+  }
+  .thought-exp-inner p { color: var(--cream-dim); font-size: 0.95rem; margin-top: 1rem; margin-bottom: 0.8rem; }
+  .thought-exp-inner strong { color: var(--amber); }
+  .thought-exp-inner em { color: var(--cream); font-style: italic; }
+
+  /* ── CITATION ── */
+  .cite-block {
+    background: var(--bg4);
+    border: 1px solid var(--border2);
+    border-radius: var(--r);
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+  .cite-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem 1.1rem;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: var(--cream-dim);
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    transition: background var(--transition);
+  }
+  .cite-trigger:hover { background: var(--bg3); color: var(--cream); }
+  .cite-badge {
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+  }
+  .badge-peer { background: rgba(39,174,96,0.2); color: var(--green-ok); border: 1px solid rgba(39,174,96,0.3); }
+  .badge-preprint { background: rgba(212,168,67,0.15); color: var(--amber); border: 1px solid var(--border); }
+  .badge-contested { background: rgba(192,57,43,0.15); color: var(--red-warn); border: 1px solid rgba(192,57,43,0.3); }
+  .badge-analogy { background: rgba(41,128,185,0.15); color: var(--blue-note); border: 1px solid rgba(41,128,185,0.3); }
+
+  .cite-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+  .cite-block.open .cite-body { max-height: 500px; }
+  .cite-inner {
+    padding: 0.8rem 1.1rem 1rem;
+    border-top: 1px solid var(--border2);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--cream-dim);
+    line-height: 1.6;
+  }
+  .cite-inner .cite-ref { color: var(--cream); margin-bottom: 0.4rem; }
+  .cite-inner .cite-caveat { color: var(--amber); margin-top: 0.5rem; }
+  .cite-inner .cite-caveat-warn { color: var(--red-warn); }
+
+  /* ── VISUALISATION CARD ── */
+  .viz-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 1.5rem;
+    margin: 2rem 0;
+  }
+  .viz-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--amber);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .viz-caption {
+    font-size: 0.82rem;
+    color: var(--cream-dim);
+    margin-top: 0.8rem;
+    font-style: italic;
+  }
+
+  /* ── CANVASES ── */
+  canvas {
+    display: block;
+    width: 100%;
+    border-radius: 4px;
+    background: var(--bg);
+  }
+
+  /* ── SLIDER ── */
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+  }
+  .slider-row label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--amber);
+    white-space: nowrap;
+    min-width: 8rem;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    flex: 1;
+    height: 4px;
+    background: var(--bg4);
+    border-radius: 2px;
+    outline: none;
+    min-width: 120px;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--amber);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+  .slider-val {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--cream-dim);
+    min-width: 2.5rem;
+    text-align: right;
+  }
+
+  /* ── DOPAMINE TIMELINE ── */
+  .dopa-stage {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 1.5rem 0;
+  }
+  .dopa-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .dopa-row-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--cream-dim);
+    min-width: 9rem;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .dopa-bar-wrap {
+    flex: 1;
+    height: 28px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .dopa-bar {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding-left: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--bg);
+    font-weight: 500;
+    transition: width 1s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* ── LOOP DIAGRAM ── */
+  .loop-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 2rem 0;
+    position: relative;
+  }
+  .loop-step {
+    display: flex;
+    gap: 1.2rem;
+    align-items: flex-start;
+    opacity: 0;
+    transform: translateX(-16px);
+    transition: opacity 0.5s, transform 0.5s;
+  }
+  .loop-step.visible { opacity: 1; transform: translateX(0); }
+  .loop-step-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .loop-step-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--bg4);
+    border: 1px solid var(--amber-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--amber);
+    flex-shrink: 0;
+  }
+  .loop-step-line {
+    width: 1px;
+    flex: 1;
+    min-height: 1.5rem;
+    background: linear-gradient(to bottom, var(--amber-dim), transparent);
+    opacity: 0.4;
+  }
+  .loop-step-content {
+    padding: 0 0 1.5rem;
+  }
+  .loop-step-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--cream);
+    margin-bottom: 0.3rem;
+  }
+  .loop-step-desc {
+    font-size: 0.88rem;
+    color: var(--cream-dim);
+    line-height: 1.6;
+  }
+  .loop-step-tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+    margin-top: 0.4rem;
+    letter-spacing: 0.07em;
+  }
+  .tag-bio { background: rgba(212,168,67,0.1); color: var(--amber); border: 1px solid var(--border); }
+  .tag-org { background: rgba(41,128,185,0.1); color: var(--blue-note); border: 1px solid rgba(41,128,185,0.25); }
+  .tag-tech { background: rgba(39,174,96,0.1); color: var(--green-ok); border: 1px solid rgba(39,174,96,0.25); }
+
+  /* ── GOLDRATT QUESTIONS ── */
+  .goldratt-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  @media (max-width: 600px) { .goldratt-grid { grid-template-columns: 1fr; } }
+  .goldratt-card {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--r);
+    padding: 1.2rem;
+  }
+  .goldratt-q {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--amber);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .goldratt-answer {
+    font-size: 0.9rem;
+    color: var(--cream);
+    line-height: 1.5;
+  }
+
+  /* ── REFLECTION PROMPT ── */
+  .reflect {
+    background: rgba(212,168,67,0.06);
+    border: 1px dashed var(--amber-dim);
+    border-radius: var(--r);
+    padding: 1.2rem 1.5rem;
+    margin: 2rem 0;
+  }
+  .reflect-label {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--amber);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .reflect p {
+    font-style: italic;
+    color: var(--cream-dim);
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.6;
+  }
+  .reflect p + p { margin-top: 0.6rem; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 3rem 0;
+  }
+
+  /* ── CONCLUSION BOX ── */
+  .conclusion-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--amber);
+    border-radius: 0 0 var(--r) var(--r);
+    padding: 2rem 2.2rem;
+    margin: 2.5rem 0;
+  }
+  .conclusion-box p {
+    font-size: 1rem;
+    color: var(--cream);
+    margin-bottom: 1rem;
+    line-height: 1.75;
+  }
+  .conclusion-box p:last-child { margin-bottom: 0; }
+  .conclusion-box strong { color: var(--amber); }
+
+  /* ── REFERENCES ── */
+  #references {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 4rem max(1.5rem, 4vw);
+  }
+  .ref-grid {
+    max-width: 76rem;
+    margin: 0 auto;
+  }
+  .ref-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--amber);
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .ref-item {
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: 1.6;
+    color: var(--cream-dim);
+    align-items: start;
+  }
+  .ref-num { color: var(--amber); }
+  .ref-badges { margin-top: 0.3rem; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── MOBILE ADJUSTMENTS ── */
+  @media (max-width: 520px) {
+    #progress-map { display: none; }
+    .hero-title { font-size: 2.2rem; }
+    .chapter { padding: 4rem 1.2rem; }
+    .goldratt-grid { grid-template-columns: 1fr; }
+    .pull-quote { padding: 1.2rem; }
+    .pull-quote::before { font-size: 3.5rem; }
+  }
+
+  /* ── CHAPTER SEPARATOR ── */
+  .chapter-sep {
+    text-align: center;
+    padding: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--amber-dim);
+    letter-spacing: 0.2em;
+    opacity: 0.5;
+  }
+
+  /* ── FOOTNOTE INLINE ── */
+  sup {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--amber);
+    cursor: help;
+  }
+
+  /* ── NAV BAR ── */
+  #topnav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 200;
+    background: rgba(14,13,11,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.7rem max(1.5rem, 4vw);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transform: translateY(-100%);
+    transition: transform 0.4s ease;
+  }
+  #topnav.visible { transform: translateY(0); }
+  .nav-brand {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--amber);
+    letter-spacing: 0.1em;
+    text-decoration: none;
+  }
+  .nav-links {
+    display: flex;
+    gap: 1.5rem;
+  }
+  .nav-link {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--cream-dim);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    transition: color var(--transition);
+  }
+  .nav-link:hover, .nav-link.active { color: var(--amber); }
+  @media (max-width: 600px) {
+    .nav-links { display: none; }
+  }
+
+  /* ── WARN STRIP ── */
+  .warn-strip {
+    background: rgba(192,57,43,0.08);
+    border: 1px solid rgba(192,57,43,0.25);
+    border-radius: var(--r);
+    padding: 0.8rem 1.1rem;
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+    color: var(--cream-dim);
+  }
+  .warn-icon { color: var(--red-warn); flex-shrink: 0; font-size: 0.9rem; }
+
+  /* ── INFO STRIP ── */
+  .info-strip {
+    background: rgba(41,128,185,0.08);
+    border: 1px solid rgba(41,128,185,0.25);
+    border-radius: var(--r);
+    padding: 0.8rem 1.1rem;
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+    margin: 1rem 0;
+    font-size: 0.85rem;
+    color: var(--cream-dim);
+  }
+  .info-icon { color: var(--blue-note); flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav id="topnav">
+  <a class="nav-brand" href="#hero">THE INVISIBLE TREADMILL</a>
+  <div class="nav-links">
+    <a class="nav-link" href="#ch1">The Hook</a>
+    <a class="nav-link" href="#ch2">Perception</a>
+    <a class="nav-link" href="#ch3">Dopamine</a>
+    <a class="nav-link" href="#ch4">Organisation</a>
+    <a class="nav-link" href="#ch5">The Loop</a>
+  </div>
+</nav>
+
+<!-- PROGRESS MAP -->
+<div id="progress-map">
+  <div class="pm-dot active" data-target="hero" onclick="scrollTo('#hero')">
+    <span class="pm-label">Introduction</span>
+  </div>
+  <div class="pm-line"></div>
+  <div class="pm-dot" data-target="ch1" onclick="scrollTo('#ch1')">
+    <span class="pm-label">The Hook</span>
+  </div>
+  <div class="pm-line"></div>
+  <div class="pm-dot" data-target="ch2" onclick="scrollTo('#ch2')">
+    <span class="pm-label">Perception</span>
+  </div>
+  <div class="pm-line"></div>
+  <div class="pm-dot" data-target="ch3" onclick="scrollTo('#ch3')">
+    <span class="pm-label">Dopamine</span>
+  </div>
+  <div class="pm-line"></div>
+  <div class="pm-dot" data-target="ch4" onclick="scrollTo('#ch4')">
+    <span class="pm-label">Organisation & AI</span>
+  </div>
+  <div class="pm-line"></div>
+  <div class="pm-dot" data-target="ch5" onclick="scrollTo('#ch5')">
+    <span class="pm-label">The Closed Loop</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ HERO -->
+<section id="hero">
+  <p class="hero-eyebrow">A research synthesis on cognition, overload &amp; technology</p>
+  <h1 class="hero-title">The <em>Invisible</em> Treadmill</h1>
+  <p class="hero-sub">Why your brain cannot detect the overload it is in, why it rewards you for staying there, and why every new tool makes it worse.</p>
+  <blockquote class="hero-premise">
+    This is not a moral failing. It is the predictable output of biological systems operating exactly as designed — in an environment they were never designed for.
+  </blockquote>
+  <a class="begin-btn" href="#ch1">
+    Begin Reading
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </a>
+  <div class="scroll-chapters">
+    <span>Five chapters</span>
+    <div class="chapter-pills">
+      <a class="chapter-pill" href="#ch1">I. The Hook</a>
+      <a class="chapter-pill" href="#ch2">II. Logarithmic Perception</a>
+      <a class="chapter-pill" href="#ch3">III. The Dopamine System</a>
+      <a class="chapter-pill" href="#ch4">IV. Organisation &amp; AI</a>
+      <a class="chapter-pill" href="#ch5">V. The Closed Loop</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ CH 1: THE HOOK -->
+<section id="ch1" class="chapter">
+  <div class="chapter-header fade-in">
+    <span class="chapter-num">CHAPTER I</span>
+    <h2 class="chapter-title">You are not weak.<br><em>Your hardware is running perfectly.</em></h2>
+  </div>
+
+  <div class="prose fade-in">
+    <p>Something is wrong. You can feel it vaguely — a background hum of too much, a sense that work never really ends, that thinking never quite reaches the depth it used to. And yet you function. You process. You deliver. So the feeling gets filed away.</p>
+    <p>This document is about why that filing happens, why it is biologically inevitable, and why the tools you are now using to cope are making the underlying problem structurally worse — while generating the neurological sensation of progress.</p>
+    <p>Start with three observations you have almost certainly made and then forgotten.</p>
+  </div>
+
+  <!-- Three thought experiments as the hook -->
+  <div class="thought-exp fade-in" id="te-party">
+    <button class="thought-exp-trigger" onclick="toggleExp('te-party')">
+      <div class="thought-exp-icon">🎉</div>
+      <div>
+        <span class="thought-exp-label">Thought Experiment 1</span>
+        <span class="thought-exp-title">The crowded room</span>
+      </div>
+      <svg class="thought-exp-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="thought-exp-body">
+      <div class="thought-exp-inner">
+        <p>You are at a loud party. The noise is overwhelming — a wall of sound. Twenty minutes in, you have a conversation you can hear clearly. What changed? The room is equally loud. Your <em>auditory baseline</em> recalibrated. Your brain stopped treating the ambient noise as information and filed it as background.</p>
+        <p><strong>Now here is the part people miss:</strong> if someone nearby quietly says your name — something genuinely important — it is now harder to hear them than it would have been in silence. You have not only filtered the noise. You have filtered the signals that live at the same volume as the noise.</p>
+        <p>This is not selective attention. This is perceptual baseline recalibration — a hard physical property of how sensation works. <em>And it happens to your cognitive load in exactly the same way.</em></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="thought-exp fade-in" id="te-pain">
+    <button class="thought-exp-trigger" onclick="toggleExp('te-pain')">
+      <div class="thought-exp-icon">🦶</div>
+      <div>
+        <span class="thought-exp-label">Thought Experiment 2</span>
+        <span class="thought-exp-title">The chronic pain you stopped noticing</span>
+      </div>
+      <svg class="thought-exp-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="thought-exp-body">
+      <div class="thought-exp-inner">
+        <p>You hurt your lower back three years ago. For weeks it was all you could think about. Then it became a background presence. Then it became how your back just feels. You stopped describing yourself as someone in pain. You started describing yourself as someone who just has a bit of a bad back.</p>
+        <p><strong>Nothing healed.</strong> The signal did not go away. Your perceptual system recalibrated its baseline upward and the pain became the new normal. On the day your back is worse than usual, you notice. On the day it is exactly as bad as it has been for three years, you do not.</p>
+        <p>Now substitute: <em>cognitive demands, meeting load, interruption frequency, unfinished work.</em> The mechanism is identical. The environment does not improve. The pain just stops being detectable as pain.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="thought-exp fade-in" id="te-team">
+    <button class="thought-exp-trigger" onclick="toggleExp('te-team')">
+      <div class="thought-exp-icon">🏢</div>
+      <div>
+        <span class="thought-exp-label">Thought Experiment 3</span>
+        <span class="thought-exp-title">The team shortcoming you normalised</span>
+      </div>
+      <svg class="thought-exp-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="thought-exp-body">
+      <div class="thought-exp-inner">
+        <p>You joined a team two years ago. In month one you noticed things: the meetings ran over, priorities shifted unpredictably, no one seemed to own outcomes clearly. You had observations. You asked questions. Then you stopped.</p>
+        <p>Not because the problems were fixed. Because they became <em>the texture of the environment</em> rather than deviations from it. Your perceptual contrast — the gap between what you expected and what you saw — eroded. New joiners today still notice these things. You tell them "that's just how it works here."</p>
+        <p><strong>This is the most consequential version of the phenomenon:</strong> the signal you stop detecting is not just your discomfort. It is the organisational dysfunction itself. It compounds invisibly while everyone in the system has recalibrated around it.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="prose fade-in">
+    <p>These three observations describe the same mechanism operating at different scales. The next two chapters explain the biology behind it — with precision, with the caveats the research actually demands, and with the implications for how you work and lead.</p>
+  </div>
+
+  <div class="pull-quote fade-in">
+    <p>Organisations have become so acclimated to endless work in progress and fragmented attention that these conditions have become the operational norm. People adapt. Over time the overloaded state simply becomes what work feels like — not a problem to be solved, but the texture of work itself.</p>
+  </div>
+</section>
+
+<div class="chapter-sep">· · ·</div>
+
+<!-- ═══════════════════════════════════════════════════ CH 2: PERCEPTION -->
+<section id="ch2" class="chapter">
+  <div class="chapter-header fade-in">
+    <span class="chapter-num">CHAPTER II</span>
+    <h2 class="chapter-title">Mechanism One:<br><em>The Fading Lens</em></h2>
+  </div>
+
+  <div class="prose fade-in">
+    <p>The first hardwired mechanism is not psychological or cultural. It is a physical law of how sensation works, formulated in the 19th century and robustly confirmed across every sensory modality studied since.</p>
+  </div>
+
+  <h3 class="section-head fade-in">The Weber-Fechner Law</h3>
+
+  <div class="prose fade-in">
+    <p>Ernst Heinrich Weber (1834) and Gustav Theodor Fechner (1860) established what is now called the Weber-Fechner Law: <strong>the just noticeable difference (JND) between two stimuli is not a fixed amount — it is a constant proportion of the starting intensity.</strong></p>
+    <p>Fechner's extension formalised this as a logarithmic relationship. If a physical stimulus doubles, quadruples, or multiplies eightfold, your subjective perception of the change increases only by the same small fixed amount each time. Physical intensity climbs geometrically. Perceived sensation climbs arithmetic — slowly, by the same small step regardless of how large the underlying change becomes.</p>
+  </div>
+
+  <!-- Interactive logarithmic curve visualisation -->
+  <div class="viz-card fade-in">
+    <div class="viz-label">Interactive Visualisation — The Logarithmic Perception Gap</div>
+    <div class="slider-row">
+      <label>Your current load baseline:</label>
+      <input type="range" id="baseSlider" min="1" max="90" value="10" oninput="drawLog()">
+      <span class="slider-val" id="baseVal">10</span>
+    </div>
+    <canvas id="logCanvas" height="200"></canvas>
+    <p class="viz-caption" id="logCaption">At a baseline load of 10, you need an additional 2 units of demand to notice a difference. As your baseline rises, the increment required for detection grows proportionally — while your absolute headroom shrinks.</p>
+  </div>
+
+  <div class="cite-block fade-in" id="cite-wf">
+    <button class="cite-trigger" onclick="toggleCite('cite-wf')">
+      <span class="cite-badge badge-peer">PEER-REVIEWED</span>
+      <span>Weber (1834), Fechner (1860) — Foundational psychophysics · Algom (2021) Psychological Review</span>
+      <svg style="margin-left:auto;flex-shrink:0" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="cite-body">
+      <div class="cite-inner">
+        <div class="cite-ref">Weber, E.H. (1834). De Pulsu, Resorptione, Auditu et Tactu. Leipzig. · Fechner, G.T. (1860). Elemente der Psychophysik. Leipzig: Breitkopf und Härtel. · Algom, D. (2021). The Weber-Fechner law: A misnomer that persists but should go away. Psychological Review, 128(4), 757–765.</div>
+        <div class="cite-caveat">⚠ SCOPE NOTE: The law was established for physical sensory stimuli (weight, sound, light). Its extension to cognitive and emotional load is an evidence-informed analogy, not a direct mechanistic application. Recent work (Berkovich &amp; Meiran, 2023, PLOS ONE) shows emotional stimuli also conform to Weber's Law in JND tasks — giving the analogy empirical grounding — but the cognitive domain is more complex than pure sensory discrimination.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prose fade-in">
+    <p>The practical applications are everywhere once you see them. The decibel scale is built on it — sound engineers use logarithmic scales because that is how hearing works. Pharmacology dose-response curves approximate it. The f-stop system in photography is logarithmic for the same reason.</p>
+    <p>Weber's fraction — the ratio required for a just noticeable difference — is approximately <strong>0.02 for lifted weights</strong> and <strong>0.05 for auditory tones</strong>. It is not perfectly constant and shows deviations at extremes. But the principle is robust: you detect relative change, not absolute change.</p>
+  </div>
+
+  <div class="thought-exp fade-in" id="te-candle">
+    <button class="thought-exp-trigger" onclick="toggleExp('te-candle')">
+      <div class="thought-exp-icon">🕯</div>
+      <div>
+        <span class="thought-exp-label">Thought Experiment</span>
+        <span class="thought-exp-title">The candle in the dark room</span>
+      </div>
+      <svg class="thought-exp-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="thought-exp-body">
+      <div class="thought-exp-inner">
+        <p>A single candle transforms a completely dark room. Its effect is enormous — the room goes from total darkness to navigable. A second candle adds noticeably to the brightness. By the time you have ten candles in a brightly lit room, adding an eleventh is barely perceptible.</p>
+        <p>The eleventh candle produces <em>exactly as many photons</em> as the first. The change is identical in physical terms. The perceived change is nearly nothing.</p>
+        <p><strong>Now replace candles with demands, meetings, interruptions, unread messages.</strong> The tenth demand added to an already full plate is physically the same as the first demand added to an empty one. Its perceptual impact is a fraction of the first — because your baseline has risen to meet it. You do not feel ten times as loaded. You feel roughly as loaded as you always do — because that is how the perceptual system works.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-head fade-in">The Signal-Noise Asymmetry</h3>
+
+  <div class="prose fade-in">
+    <p>The most consequential implication — and one that is almost entirely absent from management literature — is that <strong>perceptual recalibration cannot selectively filter only irrelevant noise.</strong></p>
+    <p>When your baseline rises, everything rises with it. Genuinely important signals — a team member quietly deteriorating, a strategic risk compounding slowly, a subtle but persistent degradation in output quality — become indistinguishable from the background noise they live alongside.</p>
+    <p>The person is not choosing to ignore them. The perceptual contrast required to register them as distinct is simply no longer available. The antenna has been recalibrated to a noisier frequency band, and the faint but important signals are now below the detection threshold.</p>
+  </div>
+
+  <div class="reflect fade-in">
+    <div class="reflect-label">Reflection Prompt</div>
+    <p>Think of the last time someone new joined your team and noticed something about how you work that you no longer see. What was it? When did you stop seeing it? What else might you have stopped seeing at the same time?</p>
+  </div>
+
+  <h3 class="section-head fade-in">Where the Model Breaks Down: The Burnout Cliff</h3>
+
+  <div class="prose fade-in">
+    <p>Stevens' Power Law (1957) proposed that for extreme stimuli — particularly pain — the relationship is not logarithmic but <strong>exponential</strong>: small increases past a threshold feel dramatically more intense. This creates a non-linearity that has direct relevance to burnout and collapse.</p>
+  </div>
+
+  <!-- Stevens curve visualisation -->
+  <div class="viz-card fade-in">
+    <div class="viz-label">Visualisation — The Adaptation Zone &amp; The Cliff</div>
+    <canvas id="stevensCanvas" height="200"></canvas>
+    <p class="viz-caption">For most of the range, logarithmic adaptation suppresses perception — the grey zone. Past a threshold, the response flips exponential — the cliff. Burnout appears sudden to observers because the sufferer has been in the logarithmic suppression zone, unaware of their own deterioration, until the threshold is crossed.</p>
+  </div>
+
+  <div class="warn-strip fade-in">
+    <span class="warn-icon">⚠</span>
+    <span>Stevens' law was formulated for sensory stimuli. Its direct application to psychological breakdown is inferential. The broader principle — that adaptation produces sudden discontinuities rather than gradual decline — is supported by allostatic load research and burnout literature, but claiming direct mechanistic equivalence overstates what the evidence shows.</span>
+  </div>
+
+  <div class="cite-block fade-in" id="cite-stevens">
+    <button class="cite-trigger" onclick="toggleCite('cite-stevens')">
+      <span class="cite-badge badge-peer">PEER-REVIEWED</span>
+      <span>Stevens, S.S. (1957) — On the psychophysical law · Berkovich &amp; Meiran (2023) — Emotions and Weber's Law</span>
+      <svg style="margin-left:auto;flex-shrink:0" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="cite-body">
+      <div class="cite-inner">
+        <div class="cite-ref">Stevens, S.S. (1957). On the psychophysical law. Psychological Review, 64(3), 153–181. · Berkovich, R. &amp; Meiran, N. (2023). Positive emotions conform to Weber's Law. PLOS ONE.</div>
+        <div class="cite-caveat">Stevens' Power Law: S = kIⁿ where n &gt; 1 for pain (n ≈ 3.5) and n &lt; 1 for most other modalities. The logarithmic law is a special case where n approaches 0 at the limit. The flip between regimes is relevant but the exact threshold for cognitive/emotional load cannot be specified from sensory research alone.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conclusion-box fade-in">
+    <p><strong>The mechanism in summary:</strong> Your perceptual system does not measure absolute levels — it measures proportional change from baseline. As baseline rises, your threshold for detecting further change rises with it. This is not resilience or adaptation in any useful sense. It is a fading lens: the more loaded the environment, the less able you are to detect that you are loaded. And crucially, the less able you are to detect the genuinely important signals that live in the same frequency band as the noise.</p>
+    <p>There is no internal alarm that fires when adaptation has gone too far. The mechanism that would detect the problem is the same mechanism that has been recalibrated by it.</p>
+  </div>
+</section>
+
+<div class="chapter-sep">· · ·</div>
+
+<!-- ═══════════════════════════════════════════════════ CH 3: DOPAMINE -->
+<section id="ch3" class="chapter">
+  <div class="chapter-header fade-in">
+    <span class="chapter-num">CHAPTER III</span>
+    <h2 class="chapter-title">Mechanism Two:<br><em>The Seeking Engine</em></h2>
+  </div>
+
+  <div class="prose fade-in">
+    <p>The second mechanism operates at the neurochemical level. It explains why — even when people understand intellectually that they are overloaded — they keep processing, keep switching, keep checking. Understanding it requires correcting a widely repeated but imprecise claim.</p>
+  </div>
+
+  <h3 class="section-head fade-in">Correcting the Dopamine Myth</h3>
+
+  <div class="info-strip fade-in">
+    <span class="info-icon">ℹ</span>
+    <span>A popular version of this idea states: "dopamine is an anticipation molecule, not a pleasure molecule — it is not released at the end of a reward." This is <strong>partially correct but meaningfully overstated</strong>, and the inaccuracy matters if the argument is to rest on solid ground.</span>
+  </div>
+
+  <div class="prose fade-in">
+    <p>Wolfram Schultz's foundational research (1997–1998) established what the system actually does. Dopamine neurons fire based on <strong>reward prediction errors</strong> — the gap between what was expected and what actually happened.</p>
+  </div>
+
+  <!-- Dopamine signal timeline visualisation -->
+  <div class="viz-card fade-in">
+    <div class="viz-label">Visualisation — How the Dopamine Signal Shifts With Learning</div>
+    <div id="dopaViz"></div>
+    <p class="viz-caption">Click each phase to explore how the signal evolves from naive reward to trained cue response. The key insight: once a reward is fully predictable, the dopamine signal migrates entirely to the cue. Certainty kills the signal. Uncertainty maintains it.</p>
+    <div style="display:flex;gap:0.7rem;margin-top:0.8rem;flex-wrap:wrap;">
+      <button onclick="setDopaPhase(0)" id="dpBtn0" style="font-family:var(--font-mono);font-size:0.65rem;padding:0.4rem 0.8rem;background:var(--amber);color:var(--bg);border:none;border-radius:3px;cursor:pointer;">Phase 1: No learning</button>
+      <button onclick="setDopaPhase(1)" id="dpBtn1" style="font-family:var(--font-mono);font-size:0.65rem;padding:0.4rem 0.8rem;background:var(--bg4);color:var(--cream-dim);border:1px solid var(--border);border-radius:3px;cursor:pointer;">Phase 2: Partially learned</button>
+      <button onclick="setDopaPhase(2)" id="dpBtn2" style="font-family:var(--font-mono);font-size:0.65rem;padding:0.4rem 0.8rem;background:var(--bg4);color:var(--cream-dim);border:1px solid var(--border);border-radius:3px;cursor:pointer;">Phase 3: Fully learned</button>
+      <button onclick="setDopaPhase(3)" id="dpBtn3" style="font-family:var(--font-mono);font-size:0.65rem;padding:0.4rem 0.8rem;background:var(--bg4);color:var(--cream-dim);border:1px solid var(--border);border-radius:3px;cursor:pointer;">Phase 4: Expected reward absent</button>
+    </div>
+    <div id="dopaDesc" style="margin-top:0.8rem;font-size:0.82rem;color:var(--cream-dim);font-style:italic;line-height:1.6;"></div>
+  </div>
+
+  <div class="cite-block fade-in" id="cite-schultz">
+    <button class="cite-trigger" onclick="toggleCite('cite-schultz')">
+      <span class="cite-badge badge-peer">PEER-REVIEWED</span>
+      <span>Schultz, Dayan &amp; Montague (1997) — Science · Schultz (1998) — Journal of Neurophysiology</span>
+      <svg style="margin-left:auto;flex-shrink:0" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="cite-body">
+      <div class="cite-inner">
+        <div class="cite-ref">Schultz, W., Dayan, P., &amp; Montague, P.R. (1997). A neural substrate of prediction and reward. Science, 275(5306), 1593–1599. · Schultz, W. (1998). Predictive reward signal of dopamine neurons. Journal of Neurophysiology, 80(1), 1–27.</div>
+        <div class="cite-caveat">This is among the most replicated findings in modern neuroscience. The prediction-error framework has been confirmed across species (rodents, primates, humans) using electrophysiology, fMRI, and pharmacological methods. The temporal difference learning model (Montague, Dayan, Sejnowski, 1996) provides the computational framework.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prose fade-in">
+    <p>The precise and more defensible statement is this: <strong>the dopamine system is an uncertainty and prediction-error system.</strong> It responds most powerfully to unpredictable rewards and to cues that reliably predict uncertain outcomes. Fully certain, fully predicted outcomes generate the weakest dopamine response. This means the system is fundamentally oriented toward seeking — toward approaching uncertain rewards — rather than toward the hedonic experience of receiving them.</p>
+  </div>
+
+  <h3 class="section-head fade-in">The Wanting-Liking Split</h3>
+
+  <div class="prose fade-in">
+    <p>Jaak Panksepp's work on the SEEKING system provides a complementary framework. He proposed that dopaminergic circuitry running from the ventral tegmental area through the nucleus accumbens and medial prefrontal cortex constitutes a primary motivational system — mediating anticipatory eagerness, exploratory drive, and goal-directed approach behaviour.</p>
+    <p>The critical distinction is between <strong>wanting</strong> (the motivational drive to seek — substantially mediated by dopamine) and <strong>liking</strong> (the hedonic experience of pleasure — substantially mediated by opioid systems). These are neurologically separable. An organism can powerfully want something that produces little pleasure upon receipt. This dissociation explains compulsive seeking behaviour that persists despite producing no meaningful satisfaction.</p>
+  </div>
+
+  <div class="cite-block fade-in" id="cite-panksepp">
+    <button class="cite-trigger" onclick="toggleCite('cite-panksepp')">
+      <span class="cite-badge badge-contested">CONTESTED</span>
+      <span>Panksepp (1998) SEEKING System — Affective Neuroscience · Barrett critique</span>
+      <svg style="margin-left:auto;flex-shrink:0" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="cite-body">
+      <div class="cite-inner">
+        <div class="cite-ref">Panksepp, J. (1998). Affective Neuroscience: The Foundations of Human and Animal Emotions. Oxford University Press. · Alcaro, A. &amp; Panksepp, J. (2011). The SEEKING mind. Neuroscience &amp; Biobehavioral Reviews, 35(9), 1805–1820.</div>
+        <div class="cite-caveat-warn">⚠ CONTESTED: Lisa Feldman Barrett and others have argued that Panksepp's proposal that seven discrete hardwired emotional circuits are biologically basic goes beyond what the data currently supports. The SEEKING system concept is influential and broadly consistent with the Schultz prediction-error literature, but should be treated as a well-supported theoretical framework rather than settled neuroscience. Davis &amp; Montag (2018, Frontiers in Neuroscience, 12, 1025) provides a balanced review of the evidence base.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-head fade-in">The Cascading Dysfunctions</h3>
+
+  <div class="prose fade-in">
+    <p>When the prediction-error system is placed inside a high-stimulation, high-interruption environment with multiple competing sources of unpredictable reward — every inbox, every notification, every AI output — several well-documented dysfunctions emerge predictably.</p>
+  </div>
+
+  <div class="two-col fade-in">
+    <div class="thought-exp" id="te-procras">
+      <button class="thought-exp-trigger" onclick="toggleExp('te-procras')">
+        <div class="thought-exp-icon">⏸</div>
+        <div>
+          <span class="thought-exp-label">Dysfunction</span>
+          <span class="thought-exp-title">Procrastination</span>
+        </div>
+        <svg class="thought-exp-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <div class="thought-exp-body">
+        <div class="thought-exp-inner">
+          <p>When a task feels large, vague, or temporally distant, the brain cannot form a clear reward prediction. Without that prediction signal, the dopamine motivational system stalls — a motivational flatline between intention and action.</p>
+          <p>The brain then migrates toward activities where the reward prediction is clearer and faster. <em>Not because those activities are more valuable. Because the prediction signal is more available.</em></p>
+        </div>
+      </div>
+    </div>
+    <div class="thought-exp" id="te-multi">
+      <button class="thought-exp-trigger" onclick="toggleExp('te-multi')">
+        <div class="thought-exp-icon">⚡</div>
+        <div>
+          <span class="thought-exp-label">Dysfunction</span>
+          <span class="thought-exp-title">Multitasking illusion</span>
+        </div>
+        <svg class="thought-exp-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <div class="thought-exp-body">
+        <div class="thought-exp-inner">
+          <p>The brain is not wired for concurrent cognitive processing on multiple complex tasks. What we call multitasking is rapid task-switching — and each switch incurs a metabolic and attentional cost as the prefrontal cortex and striatum reorient.</p>
+          <p>Notifications and messages generate frequent small, unpredictable rewards — high-frequency dopamine activation. Meaningful tasks, with delayed and uncertain rewards, cannot compete neurologically without deliberate structural support.</p>
+          <p><strong>Source:</strong> Earl Miller, MIT neuroscientist, cited in Levitin (2015, The Guardian). Poldrack et al. (2006, Neuron, 49(1), 63–74).</p>
+        </div>
+      </div>
+    </div>
+    <div class="thought-exp" id="te-time">
+      <button class="thought-exp-trigger" onclick="toggleExp('te-time')">
+        <div class="thought-exp-icon">⏱</div>
+        <div>
+          <span class="thought-exp-label">Dysfunction</span>
+          <span class="thought-exp-title">Distorted time perception</span>
+        </div>
+        <svg class="thought-exp-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <div class="thought-exp-body">
+        <div class="thought-exp-inner">
+          <p>Low dopamine activity states alter the subjective experience of time. Five minutes of effortful, ungratifying work can feel like an hour. Two hours of stimulating, variable-reward activity — browsing, checking, processing — can feel like minutes.</p>
+          <p>This distortion makes sustained deep work experientially punishing, <em>independent of actual difficulty</em>. The effort is not objectively harder. It simply generates less dopaminergic activity, which the brain interprets as slower, more costly time.</p>
+        </div>
+      </div>
+    </div>
+    <div class="thought-exp" id="te-interrupt">
+      <button class="thought-exp-trigger" onclick="toggleExp('te-interrupt')">
+        <div class="thought-exp-icon">🔔</div>
+        <div>
+          <span class="thought-exp-label">Research Finding</span>
+          <span class="thought-exp-title">The 23-minute cost of interruption</span>
+        </div>
+        <svg class="thought-exp-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <div class="thought-exp-body">
+        <div class="thought-exp-inner">
+          <p>Gloria Mark's field research at UC Irvine (CHI 2005, CHI 2008 — peer-reviewed) found that when workers were interrupted during tasks, it took an average of <strong>23 minutes and 15 seconds</strong> to return to the original task, with approximately two intervening tasks occurring before resumption.</p>
+          <p>Interrupted workers reported significantly higher stress, frustration, and mental workload on NASA's Task Load Index — even when there was no significant difference in error rates. The cost is not primarily errors. It is attentional depletion and affective load.</p>
+          <p><em>Note: The widely-cited "10 IQ point drop from email" comes from an HP-commissioned study with 8 subjects that was not peer-reviewed. Glenn Wilson, who ran it, has called it unscientific. It has been corrected here.</em></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="reflect fade-in">
+    <div class="reflect-label">Reflection Prompt</div>
+    <p>Notice what happens neurologically when you open your email or a messaging app. There is a moment of anticipation before you see what is there. That anticipation — not the content, not the outcome — is the dopamine event. The actual emails are largely irrelevant to why you keep checking.</p>
+    <p>How many times do you check a channel before you have consciously decided to? When did that start happening?</p>
+  </div>
+</section>
+
+<div class="chapter-sep">· · ·</div>
+
+<!-- ═══════════════════════════════════════════════════ CH 4: ORG + AI -->
+<section id="ch4" class="chapter">
+  <div class="chapter-header fade-in">
+    <span class="chapter-num">CHAPTER IV</span>
+    <h2 class="chapter-title">At Scale:<br><em>Organisation, Technology &amp; AI</em></h2>
+  </div>
+
+  <div class="prose fade-in">
+    <p>The two biological mechanisms operate at the individual level. But they do not stay there. They scale into organisations through three compounding forces — and they are now being structurally accelerated by AI adoption in a way that is almost entirely unremarked upon.</p>
+  </div>
+
+  <h3 class="section-head fade-in">1. Environmental Co-Evolution</h3>
+
+  <div class="prose fade-in">
+    <p>David Kirsh's work on distributed cognition established a principle that management literature has largely ignored: <strong>when people adapt to challenging environments, they also reorganise the environment itself.</strong> They restructure workflows, tool configurations, communication norms, and physical spaces around the demands they face — embedding those demands structurally.</p>
+    <p>Applied to organisational overload: the overload does not just exist as a condition people are in. It becomes the architecture of how work is organised. Meeting cadences, reporting structures, escalation processes, and decision-rights all get configured around the assumption of overload as a baseline state. Removing overload would require structural redesign — it cannot be solved by individual habit change.</p>
+  </div>
+
+  <div class="cite-block fade-in" id="cite-kirsh">
+    <button class="cite-trigger" onclick="toggleCite('cite-kirsh')">
+      <span class="cite-badge badge-peer">PEER-REVIEWED</span>
+      <span>Kirsh (1995) — The intelligent use of space · Kirsh &amp; Maglio (1994) — Cognitive Science</span>
+      <svg style="margin-left:auto;flex-shrink:0" width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="cite-body">
+      <div class="cite-inner">
+        <div class="cite-ref">Kirsh, D. (1995). The intelligent use of space. Artificial Intelligence, 73(1-2), 31–68. · Kirsh, D. &amp; Maglio, P. (1994). On distinguishing epistemic from pragmatic action. Cognitive Science, 18(4), 513–549.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-head fade-in">2. The Expectation Ratchet</h3>
+
+  <div class="prose fade-in">
+    <p>Each technology adoption that enables higher throughput raises the baseline expectation of throughput across the organisation. Email enabled faster communication — and created the expectation of faster responses. Slack compressed response-time expectations further. Each step raises the bar; the bar does not come back down.</p>
+    <p>Sherry Turkle observed a deeper consequence: as people are overwhelmed by information load, they come to expect more from technology and less from each other — driving further displacement of the relational and deliberative work that technology cannot substitute. The social fabric of sense-making degrades alongside the cognitive one.</p>
+  </div>
+
+  <h3 class="section-head fade-in">3. AI Adoption — The Loop Accelerated</h3>
+
+  <div class="prose fade-in">
+    <p>This is where the current moment becomes acute. The pattern of technology adoption described above is now repeating with AI — and at a speed and cognitive depth that makes the consequences more significant than previous cycles.</p>
+  </div>
+
+  <div class="thought-exp fade-in" id="te-offload">
+    <button class="thought-exp-trigger" onclick="toggleExp('te-offload')">
+      <div class="thought-exp-icon">🧠</div>
+      <div>
+        <span class="thought-exp-label">Research Finding</span>
+        <span class="thought-exp-title">Cognitive offloading and critical thinking — Gerlich (2025)</span>
+      </div>
+      <svg class="thought-exp-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="thought-exp-body">
+      <div class="thought-exp-inner">
+        <p>Gerlich (2025) conducted a mixed-method study with <strong>666 participants</strong> across diverse age and education groups in the United Kingdom. Using the Halpern Critical Thinking Assessment with correlation and mediation analysis, the study found:</p>
+        <p>— A significant negative correlation between frequent AI usage and critical thinking ability (r = −0.75 with cognitive offloading as mediator)<br>— Cognitive offloading was strongly correlated with AI usage (r = +0.72)<br>— Younger participants (17–25) showed higher AI dependence and lower critical thinking scores<br>— Educational attainment partially buffered the effect</p>
+        <p><strong>The theoretical mechanism:</strong> Cognitive load theory distinguishes between <em>extraneous load</em> (unnecessary effort from poor task design — reducing it is good) and <em>germane load</em> (the effortful engagement that produces learning, schema formation, and capability). AI tools, when used to bypass rather than scaffold effort, reduce germane load — the very load that builds capability over time.</p>
+        <p><strong>Source:</strong> Gerlich, M. (2025). AI tools in society: Impacts on cognitive offloading and the future of critical thinking. Societies, 15(1), 6. DOI: 10.3390/soc15010006. Peer-reviewed. A correction was published September 10, 2025.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="thought-exp fade-in" id="te-mit">
+    <button class="thought-exp-trigger" onclick="toggleExp('te-mit')">
+      <div class="thought-exp-icon">⚡</div>
+      <div>
+        <span class="thought-exp-label">Research Finding (Preprint — Read Caveats)</span>
+        <span class="thought-exp-title">Neural evidence: MIT Media Lab EEG study (2025)</span>
+      </div>
+      <svg class="thought-exp-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="thought-exp-body">
+      <div class="thought-exp-inner">
+        <p>Kosmyna et al. (2025) at MIT Media Lab tracked 54 participants over four sessions using EEG brain activity measurement alongside NLP essay quality analysis. Three conditions: LLM-assisted, search-assisted, or brain-only.</p>
+        <p>Key findings:<br>— Brain connectivity scaled down systematically with tool support level<br>— LLM users showed up to <strong>55% reduced neural connectivity</strong> vs brain-only group<br>— 83% of LLM users could not accurately quote their own just-written essays<br>— When groups were switched, LLM-to-brain users showed continued under-engagement in session 4</p>
+        <div style="background:rgba(192,57,43,0.08);border:1px solid rgba(192,57,43,0.25);border-radius:4px;padding:0.7rem;margin-top:0.8rem;">
+          <strong style="color:var(--red-warn);font-size:0.75rem;font-family:var(--font-mono);">⚠ CRITICAL CAVEATS:</strong>
+          <p style="color:var(--cream-dim);font-size:0.82rem;margin-top:0.4rem;">This was a preprint — not peer-reviewed at publication. Only 54 participants total; only 18 completed the 4th session. Task was narrow (SAT-style essay writing) and cannot be directly generalised. Critics note higher neural activity in brain-only group may partly reflect different motor/visual activities, not purely cognitive engagement. Treat as preliminary evidence consistent with the theoretical framework — not as settled conclusion.</p>
+          <p style="color:var(--cream-dim);font-size:0.8rem;margin-top:0.3rem;">Source: Kosmyna et al. (2025). Your brain on ChatGPT. arXiv:2506.08872. MIT Media Lab. Critique: Marrone &amp; Kovanovic (2025, The Conversation).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="section-head fade-in">Goldratt's Four Questions Applied</h3>
+
+  <div class="prose fade-in">
+    <p>Eliyahu Goldratt proposed that technology adoption almost always fails to deliver its promised benefits because organisations change the technology while keeping the old rules that were built around the limitation the technology was supposed to remove. The four questions:</p>
+  </div>
+
+  <div class="goldratt-grid fade-in">
+    <div class="goldratt-card">
+      <div class="goldratt-q">Q1 — What is the power of the technology?</div>
+      <div class="goldratt-answer">AI can process, draft, summarise, and generate at a speed and volume no human can match. It removes the friction of execution for many categories of cognitive task.</div>
+    </div>
+    <div class="goldratt-card">
+      <div class="goldratt-q">Q2 — What limitation does it diminish?</div>
+      <div class="goldratt-answer">The mismatch between the volume of information, decisions, and tasks in modern work and the hard ceiling of human cognitive bandwidth and time.</div>
+    </div>
+    <div class="goldratt-card">
+      <div class="goldratt-q">Q3 — What rules were built around that limitation?</div>
+      <div class="goldratt-answer">That attention is finite. That fewer concurrent tasks produces better outcomes. That depth of engagement matters more than throughput. That some demands should simply not be met.</div>
+    </div>
+    <div class="goldratt-card" style="border-color: rgba(192,57,43,0.3);">
+      <div class="goldratt-q" style="color:var(--red-warn);">Q4 — What rules should we use now? (What is actually happening)</div>
+      <div class="goldratt-answer" style="color:var(--cream);">The rules are not changing. AI is being used to process more volume at lower engagement per item. The limitation has not been removed — it has been obscured at a cost that accumulates in cognitive capability over time.</div>
+    </div>
+  </div>
+
+  <div class="prose fade-in">
+    <p>The dopamine-AI feedback loop completes the picture. Every prompt is an uncertainty event. Every AI response is a partially unpredictable reward. The rapid, variable outputs of AI tools map closely onto the variable-ratio reinforcement schedule — the same schedule underlying slot machines and social media feeds — that generates the most sustained motivational drive.</p>
+    <p>The subjective experience of using AI to process high volumes of demands is <strong>genuinely neurologically rewarding</strong> — not because meaningful work is being accomplished, but because the prediction-error system is being continuously activated at a high frequency. The sensation of processing, navigating, and making progress is reinforced. The capacity for slower, more effortful thinking that produces genuine insight is quietly displaced.</p>
+  </div>
+
+  <div class="reflect fade-in">
+    <div class="reflect-label">Leadership Reflection</div>
+    <p>When your team adopts AI tools, what does success look like to you? Is it measured by output volume, response speed, or throughput? Or is it measured by the quality of judgment, the depth of thinking, and the clarity of strategic decisions?</p>
+    <p>If your metrics reward the former, your incentive structure is actively accelerating the loop described in this document — regardless of what you say about "quality" in meetings.</p>
+  </div>
+</section>
+
+<div class="chapter-sep">· · ·</div>
+
+<!-- ═══════════════════════════════════════════════════ CH 5: THE LOOP -->
+<section id="ch5" class="chapter">
+  <div class="chapter-header fade-in">
+    <span class="chapter-num">CHAPTER V</span>
+    <h2 class="chapter-title">The Closed Loop:<br><em>Why It Keeps Repeating</em></h2>
+  </div>
+
+  <div class="prose fade-in">
+    <p>The pattern repeats not because of weak management, poor culture, or individual failure of discipline. It repeats because the two biological systems at the core of it have no natural self-correcting mechanism — and every organisational and technological response to date has operated inside the loop rather than outside it.</p>
+  </div>
+
+  <!-- Animated loop steps -->
+  <div class="loop-steps" id="loopSteps">
+    <div class="loop-step" id="ls0">
+      <div class="loop-step-left">
+        <div class="loop-step-num">1</div>
+        <div class="loop-step-line"></div>
+      </div>
+      <div class="loop-step-content">
+        <div class="loop-step-title">Overload accumulates</div>
+        <div class="loop-step-desc">Demands, interruptions, and concurrent obligations exceed cognitive bandwidth. The volume of work in progress grows beyond what can be meaningfully held.</div>
+        <span class="loop-step-tag tag-org">ORGANISATIONAL</span>
+      </div>
+    </div>
+    <div class="loop-step" id="ls1">
+      <div class="loop-step-left">
+        <div class="loop-step-num">2</div>
+        <div class="loop-step-line"></div>
+      </div>
+      <div class="loop-step-content">
+        <div class="loop-step-title">Logarithmic adaptation makes it feel normal</div>
+        <div class="loop-step-desc">The perceptual baseline rises. The overload stops registering as anomalous. Important signals degrade into the noise. The mechanism that would detect the problem has been recalibrated by it.</div>
+        <span class="loop-step-tag tag-bio">BIOLOGICAL — Weber-Fechner</span>
+      </div>
+    </div>
+    <div class="loop-step" id="ls2">
+      <div class="loop-step-left">
+        <div class="loop-step-num">3</div>
+        <div class="loop-step-line"></div>
+      </div>
+      <div class="loop-step-content">
+        <div class="loop-step-title">The prediction-error system makes processing feel rewarding</div>
+        <div class="loop-step-desc">Variable, unpredictable inputs — inboxes, notifications, tool outputs — generate continuous dopaminergic activation. Seeking and processing feel productive. Resolution and rest do not generate the same signal.</div>
+        <span class="loop-step-tag tag-bio">BIOLOGICAL — Dopamine</span>
+      </div>
+    </div>
+    <div class="loop-step" id="ls3">
+      <div class="loop-step-left">
+        <div class="loop-step-num">4</div>
+        <div class="loop-step-line"></div>
+      </div>
+      <div class="loop-step-content">
+        <div class="loop-step-title">Tools are adopted to handle more volume</div>
+        <div class="loop-step-desc">Rather than reducing demand at source, each tool cycle raises throughput capacity — and with it, throughput expectation. The ratchet advances. The environment reorganises around the new baseline.</div>
+        <span class="loop-step-tag tag-tech">TECHNOLOGICAL — Kirsh, Turkle</span>
+      </div>
+    </div>
+    <div class="loop-step" id="ls4">
+      <div class="loop-step-left">
+        <div class="loop-step-num">5</div>
+        <div class="loop-step-line"></div>
+      </div>
+      <div class="loop-step-content">
+        <div class="loop-step-title">Cognitive offloading erodes deeper capability</div>
+        <div class="loop-step-desc">Germane cognitive load — the effortful engagement that builds judgment, schema, and genuine understanding — is progressively reduced. The capacity for slow, deep thinking atrophies. Output continues; depth degrades.</div>
+        <span class="loop-step-tag tag-tech">RESEARCH — Gerlich 2025, Kosmyna 2025</span>
+      </div>
+    </div>
+    <div class="loop-step" id="ls5">
+      <div class="loop-step-left">
+        <div class="loop-step-num">6</div>
+        <div class="loop-step-line"></div>
+      </div>
+      <div class="loop-step-content">
+        <div class="loop-step-title">Metacognition degrades</div>
+        <div class="loop-step-desc">The attention required to evaluate one's own cognitive state is consumed by the overload itself. The capacity to step back and question whether the environment is appropriate is no longer available as a free resource.</div>
+        <span class="loop-step-tag tag-bio">BIOLOGICAL — Cognitive load theory</span>
+      </div>
+    </div>
+    <div class="loop-step" id="ls6">
+      <div class="loop-step-left">
+        <div class="loop-step-num">7</div>
+        <div class="loop-step-line"></div>
+      </div>
+      <div class="loop-step-content">
+        <div class="loop-step-title">The system is never questioned — overload increases further</div>
+        <div class="loop-step-desc">With no internal detection mechanism and no metacognitive slack, the system perpetuates. New tools are sought. The cycle repeats at a higher baseline, faster. Return to Step 1.</div>
+        <span class="loop-step-tag tag-org">ORGANISATIONAL → REPEAT</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <h3 class="section-head fade-in">Why Individual Willpower Cannot Break This</h3>
+
+  <div class="prose fade-in">
+    <p>The loop has no natural internal correcting force. Neither of the two biological mechanisms have a satiation point in this environment. Logarithmic adaptation has no alarm that fires when you have adapted too far. The prediction-error system has no ceiling on seeking — only on consuming. And the metacognitive capacity that would detect the problem and generate the will to act has been consumed by the problem itself.</p>
+    <p>Individual willpower — the standard prescribed solution — attempts to operate inside the loop. It is itself subject to the dopamine prediction-error dynamics that make sustained effortful behaviour without immediate reward neurologically costly. And it operates inside an environment that has been structurally reorganised around the overload, as Kirsh's work describes.</p>
+    <p><strong>The only forces that interrupt the loop are structural:</strong> changes that reduce the volume of demands at source; that protect cognitive slack as a non-negotiable design condition of how work is organised; and that redefine performance as fewer things completed with full attention rather than more things processed at lower engagement.</p>
+  </div>
+
+  <h3 class="section-head fade-in">The Leadership and Organisational Implication</h3>
+
+  <div class="prose fade-in">
+    <p>Goldratt's formulation holds exactly here. The limitation is human cognitive bandwidth. The rules built around that limitation — that attention is finite, that depth matters more than throughput, that work in progress has a cost, that some demands should not be met at all — are the rules most aggressively being discarded at the precise moment they are most important to preserve.</p>
+    <p>The question for any leader or team designing how work is done is not "how do we help people handle more?" It is: <strong>"what do we need to handle less of, so that the handling of what remains is done with full cognitive engagement?"</strong></p>
+    <p>Adopting AI tools without answering that question first does not solve the overload. It obscures it, accelerates it, and erodes the human capacity that would eventually be needed to detect and correct it.</p>
+  </div>
+
+  <div class="conclusion-box fade-in">
+    <p><strong>The technology is not the problem.</strong> Every tool discussed in this document — from email to AI — has genuine capability. The problem is the refusal to change the rules built around the limitations those tools are meant to address.</p>
+    <p>A tool that helps a person process 3× the volume of demands does not solve the overload problem if the environment responds by delivering 4× the volume of demands. It deepens it — invisibly, in the logarithmic zone, below the threshold of detection, rewarded neurologically at every step of the descent.</p>
+    <p><strong>Seeing the loop is the prerequisite for breaking it.</strong> Everything else is navigation within it.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ REFERENCES -->
+<section id="references">
+  <div class="ref-grid">
+    <div class="ref-title">References &amp; Research Basis</div>
+    <div class="ref-item"><span class="ref-num">1</span><span>Fechner, G.T. (1860). <em>Elemente der Psychophysik.</em> Leipzig: Breitkopf und Härtel. Weber, E.H. (1834). <em>De Pulsu, Resorptione, Auditu et Tactu.</em> Leipzig. Reviewed in: Algom, D. (2021). The Weber-Fechner law: A misnomer that persists but should go away. <em>Psychological Review,</em> 128(4), 757–765.<div class="ref-badges"><span class="cite-badge badge-peer">PEER-REVIEWED</span><span class="cite-badge badge-analogy">ANALOGY TO COGNITIVE LOAD</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">2</span><span>Holway, A.H. &amp; Pratt, C.C. (1936). The Weber ratio for intensive discrimination. <em>Psychological Review,</em> 43, 322–340. Riesz, R.R. (1928). Differential intensity sensitivity of the ear for pure tones. <em>Physical Review,</em> 31(5), 867–875.<div class="ref-badges"><span class="cite-badge badge-peer">PEER-REVIEWED</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">3</span><span>Berkovich, R. &amp; Meiran, N. (2023). Positive emotions conform to Weber's Law. <em>PLOS ONE.</em> Reported: PsyPost (December 25, 2023).<div class="ref-badges"><span class="cite-badge badge-peer">PEER-REVIEWED</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">4</span><span>Stevens, S.S. (1957). On the psychophysical law. <em>Psychological Review,</em> 64(3), 153–181.<div class="ref-badges"><span class="cite-badge badge-peer">PEER-REVIEWED</span><span class="cite-badge badge-analogy">INFERENTIAL EXTENSION</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">5</span><span>Schultz, W., Dayan, P., &amp; Montague, P.R. (1997). A neural substrate of prediction and reward. <em>Science,</em> 275(5306), 1593–1599. Schultz, W. (1998). Predictive reward signal of dopamine neurons. <em>Journal of Neurophysiology,</em> 80(1), 1–27.<div class="ref-badges"><span class="cite-badge badge-peer">PEER-REVIEWED</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">6</span><span>Panksepp, J. (1998). <em>Affective Neuroscience: The Foundations of Human and Animal Emotions.</em> Oxford University Press. Alcaro, A. &amp; Panksepp, J. (2011). The SEEKING mind. <em>Neuroscience &amp; Biobehavioral Reviews,</em> 35(9), 1805–1820.<div class="ref-badges"><span class="cite-badge badge-contested">CONTESTED — SEE BARRETT</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">7</span><span>Davis, K.L. &amp; Montag, C. (2018). Selected principles of Pankseppian affective neuroscience. <em>Frontiers in Neuroscience,</em> 12, 1025. Barrett critique referenced therein.<div class="ref-badges"><span class="cite-badge badge-peer">PEER-REVIEWED</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">8</span><span>Miller, E.K. cited in: Levitin, D.J. (2015). Why the modern world is bad for your brain. <em>The Guardian.</em> Poldrack, R.A. et al. (2006). Interactive memory systems. <em>Neuron,</em> 49(1), 63–74.<div class="ref-badges"><span class="cite-badge badge-peer">PEER-REVIEWED</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">9</span><span>Mark, G., Gonzalez, V.M., &amp; Harris, J. (2005). No task left behind: Examining the nature of fragmented work. <em>CHI 2005.</em> Mark, G., Gudith, D., &amp; Klocke, U. (2008). The cost of interrupted work: More speed and stress. <em>CHI 2008.</em> UC Irvine.<div class="ref-badges"><span class="cite-badge badge-peer">PEER-REVIEWED</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">10</span><span>Wilson, G. (2005). HP Infomania Study. <em>Not peer-reviewed.</em> Wilson's own assessment: "It didn't prove much of anything." Corrected in this document — claim of 10-point IQ drop is not supported.<div class="ref-badges"><span class="cite-badge badge-contested">RETRACTED CLAIM</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">11</span><span>Kirsh, D. (1995). The intelligent use of space. <em>Artificial Intelligence,</em> 73(1-2), 31–68. Kirsh, D. &amp; Maglio, P. (1994). On distinguishing epistemic from pragmatic action. <em>Cognitive Science,</em> 18(4), 513–549.<div class="ref-badges"><span class="cite-badge badge-peer">PEER-REVIEWED</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">12</span><span>Turkle, S. (2011). <em>Alone Together: Why We Expect More from Technology and Less from Each Other.</em> Basic Books.<div class="ref-badges"><span class="cite-badge badge-peer">PEER-REVIEWED</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">13</span><span>Gerlich, M. (2025). AI tools in society: Impacts on cognitive offloading and the future of critical thinking. <em>Societies,</em> 15(1), 6. DOI: 10.3390/soc15010006. Correction published September 10, 2025.<div class="ref-badges"><span class="cite-badge badge-peer">PEER-REVIEWED</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">14</span><span>Kosmyna, N. et al. (2025). Your brain on ChatGPT: Accumulation of cognitive debt when using an AI assistant for essay writing task. <em>arXiv preprint</em> arXiv:2506.08872. MIT Media Lab.<div class="ref-badges"><span class="cite-badge badge-preprint">PREPRINT — NOT PEER-REVIEWED</span></div></span></div>
+    <div class="ref-item"><span class="ref-num">15</span><span>Marrone, R. &amp; Kovanovic, V. (2025, June 23). MIT researchers say using ChatGPT can rot your brain. The truth is more complicated. <em>The Conversation.</em> Methodological critique.<div class="ref-badges"><span class="cite-badge badge-analogy">METHODOLOGICAL CRITIQUE</span></div></span></div>
+  </div>
+</section>
+
+<script>
+// ── UTILITIES ──
+function toggleExp(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+function toggleCite(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+function scrollTo(sel) {
+  document.querySelector(sel)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── FADE IN ON SCROLL ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      // loop steps stagger
+      if (e.target.classList.contains('loop-step')) {
+        const idx = parseInt(e.target.id.replace('ls',''));
+        e.target.style.transitionDelay = (idx * 0.12) + 's';
+      }
+    }
+  });
+}, { threshold: 0.08 });
+
+document.querySelectorAll('.fade-in, .loop-step').forEach(el => observer.observe(el));
+
+// ── PROGRESS MAP TRACKING ──
+const sections = ['hero','ch1','ch2','ch3','ch4','ch5'];
+const dots = document.querySelectorAll('.pm-dot');
+const navLinks = document.querySelectorAll('.nav-link');
+const topnav = document.getElementById('topnav');
+let heroBottom = 0;
+
+function updateProgress() {
+  const scrollY = window.scrollY;
+  heroBottom = document.getElementById('hero').getBoundingClientRect().bottom + scrollY;
+  
+  // Show/hide topnav
+  if (scrollY > heroBottom - 100) {
+    topnav.classList.add('visible');
+  } else {
+    topnav.classList.remove('visible');
+  }
+
+  let current = 0;
+  sections.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el && el.getBoundingClientRect().top < window.innerHeight * 0.4) {
+      current = i;
+    }
+  });
+  dots.forEach((d, i) => d.classList.toggle('active', i === current));
+  navLinks.forEach((l, i) => l.classList.toggle('active', i === current - 1));
+}
+
+window.addEventListener('scroll', updateProgress, { passive: true });
+
+// ── LOG CURVE VISUALISATION ──
+function drawLog() {
+  const canvas = document.getElementById('logCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  const H = canvas.height = 200 * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const w = canvas.offsetWidth, h = 200;
+  ctx.clearRect(0,0,w,h);
+
+  const base = parseInt(document.getElementById('baseSlider').value);
+  document.getElementById('baseVal').textContent = base;
+  const k = 0.05; // Weber fraction approximation
+  const jnd = Math.round(base * k);
+  document.getElementById('logCaption').textContent =
+    `At a baseline load of ${base}, you need an additional ~${Math.max(1,jnd)} units of demand to notice a difference. As your baseline rises, the increment required for detection grows proportionally — while your absolute headroom shrinks.`;
+
+  const pad = { l: 48, r: 20, t: 20, b: 36 };
+  const cw = w - pad.l - pad.r, ch = h - pad.t - pad.b;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(232,223,200,0.06)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + ch * (i/4);
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l+cw, y); ctx.stroke();
+  }
+
+  // Log curve
+  const maxI = 100;
+  ctx.strokeStyle = '#d4a843';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let x = 0; x <= cw; x++) {
+    const I = 1 + (maxI-1) * (x/cw);
+    const S = Math.log(I) / Math.log(maxI);
+    const px = pad.l + x, py = pad.t + ch * (1 - S);
+    x === 0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+
+  // Baseline marker
+  const bx = pad.l + cw * ((base-1)/(maxI-1));
+  const bS = Math.log(base)/Math.log(maxI);
+  const by = pad.t + ch * (1-bS);
+
+  ctx.strokeStyle = 'rgba(212,168,67,0.35)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(bx, pad.t+ch); ctx.lineTo(bx, by); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.l, by); ctx.lineTo(bx, by); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Dot
+  ctx.fillStyle = '#d4a843';
+  ctx.beginPath(); ctx.arc(bx, by, 5, 0, Math.PI*2); ctx.fill();
+
+  // JND arrow
+  const jndX = pad.l + cw * ((base + Math.max(1,jnd)-1)/(maxI-1));
+  if (jndX < pad.l+cw) {
+    ctx.strokeStyle = 'rgba(39,174,96,0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(bx, by-4); ctx.lineTo(jndX, by-4); ctx.stroke();
+    ctx.fillStyle = 'rgba(39,174,96,0.9)';
+    ctx.font = `${10 * window.devicePixelRatio/window.devicePixelRatio}px JetBrains Mono, monospace`;
+    ctx.font = '10px monospace';
+    ctx.fillText(`JND: +${Math.max(1,jnd)}`, jndX+4, by);
+  }
+
+  // Axes labels
+  ctx.fillStyle = 'rgba(232,223,200,0.35)';
+  ctx.font = '9px monospace';
+  ctx.fillText('0', pad.l-12, pad.t+ch+2);
+  ctx.fillText('100', pad.l+cw-16, pad.t+ch+12);
+  ctx.fillText('Perceived', pad.l-44, pad.t+ch/2);
+  ctx.fillText('Demand →', pad.l+cw/2-20, pad.t+ch+14);
+}
+
+window.addEventListener('resize', drawLog);
+setTimeout(drawLog, 100);
+
+// ── STEVENS CURVE ──
+function drawStevens() {
+  const canvas = document.getElementById('stevensCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  const H = canvas.height = 200 * window.devicePixelRatio;
+  const w = canvas.offsetWidth, h = 200;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  ctx.clearRect(0,0,w,h);
+
+  const pad = { l: 48, r: 80, t: 20, b: 36 };
+  const cw = w - pad.l - pad.r, ch = h - pad.t - pad.b;
+
+  // Zone backgrounds
+  // Adaptation zone
+  const splitX = pad.l + cw * 0.72;
+  ctx.fillStyle = 'rgba(39,174,96,0.05)';
+  ctx.fillRect(pad.l, pad.t, splitX - pad.l, ch);
+  // Cliff zone
+  ctx.fillStyle = 'rgba(192,57,43,0.08)';
+  ctx.fillRect(splitX, pad.t, pad.l+cw - splitX, ch);
+
+  // Zone labels
+  ctx.fillStyle = 'rgba(39,174,96,0.5)';
+  ctx.font = '9px monospace';
+  ctx.fillText('ADAPTATION ZONE', pad.l + 8, pad.t + 14);
+  ctx.fillStyle = 'rgba(192,57,43,0.6)';
+  ctx.fillText('CLIFF', splitX + 6, pad.t + 14);
+
+  // Logarithmic segment
+  ctx.strokeStyle = '#9a7630';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  const splitI = 72;
+  for (let x = 0; x <= cw * 0.72; x++) {
+    const I = 1 + splitI * (x / (cw * 0.72));
+    const S = Math.log(I) / Math.log(splitI) * 0.7;
+    const px = pad.l + x, py = pad.t + ch * (1 - S);
+    x === 0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+
+  // Get endpoint for continuity
+  const S_split = 0.7;
+  const py_split = pad.t + ch * (1 - S_split);
+
+  // Exponential segment (cliff)
+  ctx.strokeStyle = '#c0392b';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(splitX, py_split);
+  for (let x = 1; x <= cw * 0.28; x++) {
+    const t = x / (cw * 0.28);
+    const S = S_split + t * t * t * (1.0 - S_split) * 1.2;
+    const clamped = Math.min(S, 1);
+    const px = splitX + x, py = pad.t + ch * (1 - clamped);
+    ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Threshold line
+  ctx.strokeStyle = 'rgba(192,57,43,0.4)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(splitX, pad.t); ctx.lineTo(splitX, pad.t+ch); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Axes
+  ctx.fillStyle = 'rgba(232,223,200,0.35)';
+  ctx.font = '9px monospace';
+  ctx.fillText('Perceived', pad.l-44, pad.t+ch/2);
+  ctx.fillText('Demand / Stress →', pad.l+cw*0.3, pad.t+ch+14);
+  ctx.fillText('threshold', splitX - 28, pad.t + ch + 14);
+}
+
+setTimeout(drawStevens, 120);
+window.addEventListener('resize', drawStevens);
+
+// ── DOPAMINE VISUALISATION ──
+const dopaPhases = [
+  {
+    label: 'Phase 1 — No learning',
+    desc: 'The reward is completely unexpected. No cue has been associated with it yet. The dopamine signal fires strongly at the moment of reward receipt — a pure surprise response. At the cue: nothing. At reward: strong positive signal.',
+    cue: 0, reward: 90, omission: 0
+  },
+  {
+    label: 'Phase 2 — Partially learned',
+    desc: 'An association between the cue and reward is forming. The dopamine signal has begun to migrate — some fires at the cue in anticipation, and the signal at reward receipt is reduced (because some of it was already "used" at the cue). Reward is still partly surprising.',
+    cue: 55, reward: 45, omission: 0
+  },
+  {
+    label: 'Phase 3 — Fully learned',
+    desc: 'The reward is fully predictable from the cue. Almost all dopamine activity has migrated to the cue — this is what drives approach behaviour. At the moment of reward receipt, the signal is near baseline — because nothing unexpected happened. The reward is being received exactly as predicted.',
+    cue: 85, reward: 8, omission: 0
+  },
+  {
+    label: 'Phase 4 — Expected reward absent (omission)',
+    desc: 'The cue fires normally — generating the usual approach-motivating dopamine. But the expected reward does not arrive. A strong NEGATIVE prediction error occurs: dopamine activity drops below baseline at the moment the reward was expected. This "dip" is as informative as the peak — it signals that the prediction was wrong in the negative direction.',
+    cue: 85, reward: 0, omission: 1
+  }
+];
+
+let currentPhase = 0;
+
+function setDopaPhase(i) {
+  currentPhase = i;
+  renderDopa();
+  [0,1,2,3].forEach(j => {
+    const btn = document.getElementById('dpBtn' + j);
+    btn.style.background = j === i ? 'var(--amber)' : 'var(--bg4)';
+    btn.style.color = j === i ? 'var(--bg)' : 'var(--cream-dim)';
+    btn.style.borderColor = j === i ? 'var(--amber)' : 'var(--border)';
+  });
+  document.getElementById('dopaDesc').textContent = dopaPhases[i].desc;
+}
+
+function renderDopa() {
+  const phase = dopaPhases[currentPhase];
+  const container = document.getElementById('dopaViz');
+  const rows = [
+    { label: 'At the cue', value: phase.cue, color: '#d4a843' },
+    { label: 'At reward receipt', value: phase.omission ? 0 : phase.reward, color: phase.reward > 50 ? '#27ae60' : phase.reward > 20 ? '#d4a843' : '#888' },
+    { label: 'At expected reward (absent)', value: phase.omission ? -40 : null, color: '#c0392b' }
+  ];
+
+  container.innerHTML = rows.filter(r => r.value !== null).map(r => {
+    const isNeg = r.value < 0;
+    const pct = Math.abs(r.value);
+    return `<div class="dopa-row" style="margin-bottom:0.6rem;">
+      <div class="dopa-row-label">${r.label}</div>
+      <div class="dopa-bar-wrap" style="position:relative;">
+        <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(232,223,200,0.15);"></div>
+        ${isNeg
+          ? `<div class="dopa-bar" style="width:${pct/2}%;background:${r.color};margin-left:${50-pct/2}%;border-radius:4px 0 0 4px;justify-content:flex-end;padding-right:0.4rem;font-size:0.6rem;color:var(--cream);">−</div>`
+          : `<div class="dopa-bar" style="width:${pct/2}%;background:${r.color};margin-left:50%;border-radius:0 4px 4px 0;">${pct > 20 ? '▲' : ''}</div>`
+        }
+      </div>
+      <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--cream-dim);min-width:3rem;text-align:right;">${isNeg ? 'below baseline' : pct === 0 ? 'baseline' : pct+'%'}</div>
+    </div>`;
+  }).join('');
+}
+
+setDopaPhase(0);
+
+// ── LOOP STEPS OBSERVER ──
+const loopObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.classList.add('visible');
+  });
+}, { threshold: 0.15 });
+document.querySelectorAll('.loop-step').forEach(el => loopObs.observe(el));
+</script>
+</body>
+</html>
