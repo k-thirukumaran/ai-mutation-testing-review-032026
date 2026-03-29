@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>Post title — Sol∞Blog</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Theme stylesheet -->
+  <link rel="stylesheet" href="css/solarized.css">
+
+  <!-- Flash prevention: apply stored theme BEFORE page renders -->
+  <script>
+    (function(){
+      var s = localStorage.getItem('sol-theme');
+      var o = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = s || o;
+    })();
+  </script>
+</head>
+
+<body>
+
+<!-- ── HEADER ── -->
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="site-name" href="index.html">Sol<span>∞</span>Blog</a>
+    <div class="theme-toggle" role="button" aria-label="Toggle theme" tabindex="0">
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      <span class="toggle-icon" id="toggle-icon"></span>
+      <span id="toggle-label"></span>
+    </div>
+  </div>
+</header>
+
+<!-- ── ARTICLE ── -->
+<main class="page-wrapper">
+  <article>
+
+    <header class="post-header">
+      <div class="post-tags">
+        <a href="#" class="tag">Tag one</a>
+        <a href="#" class="tag">Tag two</a>
+      </div>
+      <h1 class="post-title">Your post title here</h1>
+      <p class="post-subtitle">An optional subtitle or deck line for the post.</p>
+      <div class="post-meta">
+        <span class="author-name">Author Name</span>
+        <span class="meta-dot">·</span>
+        <time datetime="2025-01-01">1 January 2025</time>
+        <span class="meta-dot">·</span>
+        <span>5 min read</span>
+      </div>
+    </header>
+
+    <div class="prose">
+
+      <p class="lead">Opening paragraph in a slightly larger italic style — good for a summary sentence or hook.</p>
+
+      <p>Body copy starts here. Write naturally — all markdown-equivalent elements below are ready to use.</p>
+
+      <h2>Section heading</h2>
+
+      <p>Paragraph text with <strong>bold</strong>, <em>italic</em>, <mark>highlighted</mark>,
+      <code>inline code</code>, and <a href="#">a link</a>.</p>
+
+      <!-- Unordered list -->
+      <ul>
+        <li>First item</li>
+        <li>Second item with a nested list
+          <ul>
+            <li>Nested item</li>
+          </ul>
+        </li>
+      </ul>
+
+      <!-- Ordered list -->
+      <ol>
+        <li>Step one</li>
+        <li>Step two</li>
+      </ol>
+
+      <!-- Blockquote -->
+      <blockquote>
+        <p>Quote text goes here.</p>
+        <cite>Attribution, <em>Source</em></cite>
+      </blockquote>
+
+      <!-- Code block -->
+<pre><code>// code block example
+const greeting = 'hello, world';
+console.log(greeting);</code></pre>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Column A</th><th>Column B</th><th>Column C</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Row 1A</td><td>Row 1B</td><td>Row 1C</td></tr>
+            <tr><td>Row 2A</td><td>Row 2B</td><td>Row 2C</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Callout boxes -->
+      <div class="callout callout-tip">
+        <span class="callout-icon">💡</span>
+        <div class="callout-body"><strong>Tip</strong>Replace this with your callout content.</div>
+      </div>
+
+      <!-- Aside note -->
+      <aside>
+        <strong>📌 Note</strong> — Aside boxes use the Solarized yellow left border.
+      </aside>
+
+      <!-- Collapsible -->
+      <details>
+        <summary>Collapsible section title</summary>
+        <p>Hidden content revealed on click.</p>
+      </details>
+
+      <!-- Divider -->
+      <hr>
+
+      <h2>Another section</h2>
+      <p>Continue writing here...</p>
+
+    </div>
+
+    <footer class="post-footer">
+      <p class="post-footer-label">Filed under</p>
+      <div class="tag-cloud">
+        <a href="#" class="tag">Tag one</a>
+        <a href="#" class="tag">Tag two</a>
+      </div>
+    </footer>
+
+  </article>
+</main>
+
+<!-- Theme toggle logic -->
+<script src="js/theme.js" defer></script>
+</body>
+</html>
